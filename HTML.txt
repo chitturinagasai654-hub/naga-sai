@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Shoply — a simple Amazon-like mockup</title>
+  <style>
+    /* Basic reset */
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; background:#f3f4f6;color:#111}
+
+    /* Header / nav */
+    header{background:#131921;color:#fff;padding:12px 24px;display:flex;align-items:center;gap:18px}
+    .logo{font-weight:700;font-size:22px;letter-spacing:0.5px}
+    .logo span{color:#ffd814}
+
+    /* Search */
+    .search-bar{flex:1;display:flex}
+    .search-bar select{padding:8px;border:none;border-radius:4px 0 0 4px}
+    .search-bar input{flex:1;padding:10px;border:none}
+    .search-bar button{background:#febd69;border:none;padding:10px 16px;border-radius:0 4px 4px 0;cursor:pointer}
+
+    /* Icons area */
+    .nav-actions{display:flex;gap:18px;align-items:center}
+    .nav-actions a{color:#fff;text-decoration:none;font-size:14px}
+    .cart{background:#f08804;padding:6px 10px;border-radius:4px;color:#111;font-weight:600}
+
+    /* Main layout */
+    main{display:flex;gap:24px;padding:24px;max-width:1200px;margin:18px auto}
+    aside{width:220px}
+    .filters{background:#fff;padding:12px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+    .filters h3{margin-bottom:8px;font-size:16px}
+    .filters ul{list-style:none}
+    .filters li{padding:6px 0;border-bottom:1px solid #f1f1f1}
+
+    /* Product grid */
+    .catalog{flex:1}
+    .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+
+    .product{background:#fff;padding:12px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.06);display:flex;flex-direction:column}
+    .product img{width:100%;height:180px;object-fit:contain}
+    .product h4{font-size:15px;margin:10px 0;min-height:42px}
+    .price-row{margin-top:auto;display:flex;justify-content:space-between;align-items:center;gap:8px}
+    .price{font-weight:700}
+    .btn-add{background:#ffd814;border:1px solid #f0c14b;padding:8px;border-radius:4px;cursor:pointer}
+
+    /* Footer */
+    footer{padding:24px;text-align:center;color:#555}
+
+    /* Responsive */
+    @media (max-width:900px){main{flex-direction:column;padding:12px}aside{width:100%}.search-bar{display:none}}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">Shoply<span>.</span></div>
+
+    <form class="search-bar" onsubmit="return false">
+      <select aria-label="category">
+        <option>All</option>
+        <option>Electronics</option>
+        <option>Books</option>
+        <option>Clothing</option>
+      </select>
+      <input id="q" placeholder="Search for products, brands and more" />
+      <button onclick="doSearch()">Search</button>
+    </form>
+
+    <div class="nav-actions">
+      <a href="#">Hello, Sign in</a>
+      <a href="#">Orders</a>
+      <a href="#">Cart <span class="cart" id="cartCount">0</span></a>
+    </div>
+  </header>
+
+  <main>
+    <aside>
+      <div class="filters">
+        <h3>Shop by Category</h3>
+        <ul>
+          <li>Electronics</li>
+          <li>Computers</li>
+          <li>Smart Home</li>
+          <li>Books</li>
+          <li>Clothing</li>
+        </ul>
+      </div>
+
+      <div class="filters" style="margin-top:12px">
+        <h3>Top Sellers</h3>
+        <ul>
+          <li>Smartphone X</li>
+          <li>Bluetooth Headset</li>
+          <li>Electric Kettle</li>
+        </ul>
+      </div>
+    </aside>
+
+    <section class="catalog">
+      <div class="topbar">
+        <div>Showing <strong id="resultCount">9</strong> results for <em id="queryText">All</em></div>
+        <div>
+          <label for="sort">Sort:</label> 
+          <select id="sort" onchange="sortProducts()">
+            <option value="popular">Popular</option>
+            <option value="price-asc">Price: Low to High</option>
+            <option value="price-desc">Price: High to Low</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid" id="grid"></div> 
+    </section>
+  </main>
+
+  <footer>
+    <small>© 2025 Shoply — This is a static mockup for learning and demo purposes only.</small>
+  </footer>
+
+  <script>
+    // Sample product data (in real site this comes from server)
+    const products = [
+      {id:1,title:'Wireless Headphones with Noise Canceling',price:1199.99,img:'https://encrypted-tbn0.gstatic.com/shopping?q=tbn:ANd9GcS5X-5t4MMT8uHDZviD8tLTPkfnw-afzO6NzO7YsMl67Vd6MuwzaXjaSJtCwh_cKFH7rR43zm74vrbINBt3wd6QG5oGZcBa7DDB54HLNVI'},
+      {id:2,title:'Smartphone Pro 6.5" Display - 128GB',price:6999.00,img:'https://encrypted-tbn1.gstatic.com/shopping?q=tbn:ANd9GcQbVezEAoTXsJ9cPkGWVz3iVEO-arJi_0WNTIYuKxVG_KEf-XTVvD0YETOjrGEqUTThahmGCkLjWmCLmc8Pkc-gZi6k_J6C98nf3HAIvq7OdV8NR2v_01waEQ'},
+      {id:3,title:'4K LED Smart TV 55"',price:39999.99,img:'https://m.media-amazon.com/images/I/51epJYI6KrL._SX300_SY300_QL70_FMwebp_.jpg'},
+      {id:4,title:'Stainless Steel Electric Kettle',price:299.99,img:'https://rukminim1.flixcart.com/image/400/400/xif0q/electric-kettle/a/a/0/pigeon-1-5-litre-kettle-and-stainless-steel-water-bottle-red-original-imagm2p55qns4swe.jpeg?q=70'},
+      {id:5,title:'Compact Bluetooth Speaker',price:499.99,img:'data:image/webp;base64,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'},
+      {id:6,title:'Mechanical Keyboard (RGB)',price:899.00,img:'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS37yvR26BXhPRdHW5HzxNepIhJICu6p06JRQ&s'},
+      {id:7,title:'Running Shoes (Men) - Size 10',price:599.99,img:'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQOi6Bw4kyc5F4FrzdgMa4gC5uguLGO-GzOug&s'},
+      {id:8,title:'Classic Fiction Bestseller',price:149.99,img:'https://m.media-amazon.com/images/I/41MR47HU1JL._SR290,290_.jpg'},
+      {id:9,title:'Fitness Tracker Watch',price:799.95,img:'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR7DGRAmWqsPMqN3piTwHp_OCdxQBcWlC_WwA&s'}
+    ];
+
+    const grid = document.getElementById('grid');
+    const cartCountEl = document.getElementById('cartCount');
+    const resultCountEl = document.getElementById('resultCount');
+    const queryTextEl = document.getElementById('queryText');
+
+    let cartCount = 0;
+    let currentProducts = [...products];
+
+    function renderProducts(list){
+      grid.innerHTML = '';
+      list.forEach(p=>{
+        const card = document.createElement('div');
+        card.className = 'product';
+        card.innerHTML = ` 
+          <img src="${p.img}" alt="${escapeHtml(p.title)}" />
+          <h4>${escapeHtml(p.title)}</h4>
+          <div class="price-row">
+            <div class="price">₹${formatPrice(p.price)}</div>
+            <button class="btn-add" onclick="addToCart(${p.id})">Add to Cart</button>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+      resultCountEl.textContent = list.length;
+    }
+
+    function addToCart(id){
+      cartCount++;
+      cartCountEl.textContent = cartCount;
+      alert('Added item to cart');
+    }
+
+    function doSearch(){
+      const q = document.getElementById('q').value.trim().toLowerCase();
+      if(!q){currentProducts = [...products];queryTextEl.textContent='All'}
+      else{currentProducts = products.filter(p=>p.title.toLowerCase().includes(q));queryTextEl.textContent = '"'+q+'"'}
+      renderProducts(currentProducts);
+    }
+
+    function sortProducts(){
+      const v = document.getElementById('sort').value;
+      if(v==='price-asc') currentProducts.sort((a,b)=>a.price-b.price);
+      else if(v==='price-desc') currentProducts.sort((a,b)=>b.price-a.price);
+      else currentProducts = [...currentProducts]; // keep default
+      renderProducts(currentProducts);
+    }
+
+    function formatPrice(n){
+      return n.toFixed(2);
+    }
+
+    function escapeHtml(text){
+      return text.replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});
+    }
+
+    // initial render
+    renderProducts(products);
+  </script>
+</body>
+</html>
